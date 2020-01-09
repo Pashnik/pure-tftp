@@ -2,4 +2,6 @@
 /project/project/
 /project/target/
 .idea/
-.idea/
+/client/target/
+/utils/target/
+/server/target/

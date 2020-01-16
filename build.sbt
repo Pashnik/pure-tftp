@@ -15,11 +15,11 @@ lazy val baseSettings = Seq(
   , resourceDirectory in Compile := baseDirectory.value / "resources"
 )
 
-lazy val pureConfigVersion = "0.12.0"
 lazy val scalaTestVersion  = "3.0.4"
 lazy val logbackVersion    = "1.2.3"
 lazy val catsVersion       = "2.0.0"
 lazy val fs2Version        = "2.1.0"
+lazy val pureConfigVersion = "0.12.2"
 
 lazy val deps = Seq(
     "org.typelevel"         %% "cats-effect"    % catsVersion
@@ -34,8 +34,8 @@ lazy val deps = Seq(
 lazy val assemblySettings = Seq(
     assemblyJarName in assembly := name.value + ".jar"
   , assemblyMergeStrategy in assembly := {
-    case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-    case _                             => MergeStrategy.first
+    case PathList("META-INF", _ @_*) => MergeStrategy.discard
+    case _                           => MergeStrategy.first
   }
 )
 

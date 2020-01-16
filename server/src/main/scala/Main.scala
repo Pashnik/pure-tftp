@@ -4,15 +4,12 @@ import cats.syntax.functor._
 
 class Main extends IOApp {
   def run(args: List[String]): IO[ExitCode] =
-    withBlocker
-      .flatMap { blocker =>
-        Server
-          .start[IO](blocker)
-      }
-      .compile
-      .drain
-      .as(ExitCode.Success)
+    server.compile.drain.as(ExitCode.Success)
 
-  def withBlocker: Stream[IO, Blocker] =
-    Stream.resource(Blocker[IO])
+  def server: Stream[IO, Unit] =
+    for {
+      config  <- Stream.eval(IO.fromEither(Config.load))
+      blocker <- Stream.resource(Blocker[IO])
+      fn      <- Server.start[IO](blocker, config)
+    } yield fn
 }

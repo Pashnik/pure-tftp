@@ -1,15 +1,35 @@
-import cats.effect.{Blocker, ContextShift, Resource, Sync}
+import java.net.InetSocketAddress
+
+import scala.concurrent.duration._
+import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Sync}
 import fs2._
 import fs2.io.udp.{Socket, SocketGroup}
 
 object Server {
-  def start[F[_]: Sync: ContextShift](blocker: Blocker): Stream[F, Unit] = {
-    // TODO specify params for socketGroup.open
-    def socket: Resource[F, Socket[F]] =
-      SocketGroup[F](blocker).flatMap(_.open())
 
-    Stream.resource(socket).map { socket =>
-      ???
-    }
+  /**
+    * Trying to increase the socket receive buffer for cases where
+    * datagrams arrive in bursts faster than they can be processed.
+    *
+    * Send buffer size is actually size of the largest packet.
+    */
+  def start[F[_]: Sync: ContextShift](blocker: Blocker, params: Config)(
+        implicit F: ConcurrentEffect[F]
+  ): Stream[F, Unit] = {
+    def socket: Resource[F, Socket[F]] =
+      SocketGroup[F](blocker).flatMap(
+          _.open[F](
+            address = new InetSocketAddress(params.port.value)
+          , receiveBufferSize = Some(params.rcvBuffer.value)
+          , sendBufferSize = Some(params.sndBuffer.value)
+        )
+      )
+
+    Stream
+      .resource(socket)
+      .flatMap { udpSocket =>
+        udpSocket.reads(Some(params.timeout.duration.millis))
+      }
+    ???
   }
 }

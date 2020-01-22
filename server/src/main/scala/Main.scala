@@ -10,6 +10,6 @@ class Main extends IOApp {
     for {
       config  <- Stream.eval(IO.fromEither(Config.load))
       blocker <- Stream.resource(Blocker[IO])
-      fn      <- Server.start[IO](blocker, config)
-    } yield fn
+      serve   <- Server[IO].start(blocker, config)
+    } yield serve
 }

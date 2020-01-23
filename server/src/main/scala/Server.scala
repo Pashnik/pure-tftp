@@ -1,7 +1,7 @@
 import java.net.InetSocketAddress
 
 import scala.concurrent.duration._
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Sync}
+import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource}
 import fs2._
 import fs2.io.udp.{Socket, SocketGroup}
 
@@ -17,7 +17,7 @@ object Server {
     *
     * Send buffer size is actually size of the largest packet.
     */
-  def apply[F[_]: Sync: ContextShift: ConcurrentEffect]: Server[F] =
+  def apply[F[_]: ConcurrentEffect: ContextShift]: Server[F] =
     new Server[F] {
       override def start(blocker: Blocker, params: Config): Stream[F, Unit] = {
         def socket: Resource[F, Socket[F]] =
@@ -34,6 +34,7 @@ object Server {
           .flatMap { udpSocket =>
             udpSocket.reads(Some(params.timeout.duration.millis))
           }
+
         ???
       }
     }

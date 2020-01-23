@@ -1,6 +1,6 @@
+import cats.syntax.functor._
 import cats.effect.{Blocker, ExitCode, IO, IOApp}
 import fs2._
-import cats.syntax.functor._
 
 class Main extends IOApp {
   def run(args: List[String]): IO[ExitCode] =

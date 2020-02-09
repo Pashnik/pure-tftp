@@ -16,26 +16,32 @@ object Mail     extends Mode { val value: String = "mode"     }
 
 object Mode { val modes = List(Netascii, Octet, Mail) }
 
+trait Opcoded { val opcode: Int }
+
 sealed abstract case class IOPacket[T <: Mode](path: File, format: T) extends TftpPacket
-case class RRQ(file: File, mode: Mode = Netascii)                     extends IOPacket(file, mode) { val opcode = 1 }
-object RRQ {
+case class RRQ(file: File, mode: Mode = Netascii)                     extends IOPacket(file, mode)
+object RRQ extends Opcoded {
+  val opcode                         = 1
   implicit val encoder: Encoder[RRQ] = (rrq: RRQ) => ???
   implicit val decoder: Decoder[RRQ] = (chunk: Chunk[Byte]) => ???
 }
-case class WRQ(file: File, mode: Mode = Netascii) extends IOPacket(file, mode) { val opcode = 2 }
-object WRQ {
+case class WRQ(file: File, mode: Mode = Netascii) extends IOPacket(file, mode)
+object WRQ extends Opcoded {
+  val opcode                         = 2
   implicit val encoder: Encoder[WRQ] = (wrq: WRQ) => ???
   implicit val decoder: Decoder[WRQ] = (chunk: Chunk[Byte]) => ???
 }
 
 case class Block(number: Short)
-case class Data(block: Block, data: Array[Byte]) extends TftpPacket { val opcode = 3 }
-object Data {
+case class Data(block: Block, data: Array[Byte]) extends TftpPacket
+object Data extends Opcoded {
+  val opcode                          = 3
   implicit val encoder: Encoder[Data] = (data: Data) => ???
   implicit val decoder: Decoder[Data] = (chunk: Chunk[Byte]) => ???
 }
-case class Acknowledgment(block: Block) extends TftpPacket { val opcode = 4 }
-object Acknowledgment {
+case class Acknowledgment(block: Block) extends TftpPacket
+object Acknowledgment extends Opcoded {
+  val opcode                                    = 4
   implicit val encoder: Encoder[Acknowledgment] = (ack: Acknowledgment) => ???
   implicit val decoder: Decoder[Acknowledgment] = (bytes: Array[Byte]) => ???
 }

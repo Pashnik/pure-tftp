@@ -29,7 +29,7 @@ object Server {
             )
           )
 
-        val materialize = Materializer[F, Packet, TftpPacket].materialize
+        def materialize[In] = Materializer[F, In, TftpPacket].materialize
 
         Stream
           .resource(socket)

@@ -3,19 +3,15 @@ import fs2.Chunk
 object Codec {
   type Decoded[T] = Either[DecodedFailure, T]
 
-  trait Decoder[+T] {
-    def decode: Decoded[T]
+  trait Decoder[T] {
+    def decode(bytes: Chunk[Byte]): Decoded[T]
   }
 
-  trait Encoder[-T] {
+  trait Encoder[T] {
     def encode(tftpPacket: T): Chunk[Byte]
   }
 }
 
-// TODO Maybe typeclass
-
-sealed trait DecodedFailure extends Product with Serializable
-
-object DecodedFailures {
-  def error: DecodedFailure = ???
-}
+sealed abstract class DecodedFailure(description: String) extends Product with Serializable
+case object A                                             extends DecodedFailure("A")
+case object B                                             extends DecodedFailure("B")

@@ -1,5 +1,7 @@
+import cats.Functor
+
 import scala.concurrent.duration._
-import cats.effect.{IO, Sync}
+import cats.effect.Sync
 import cats.effect.concurrent.Ref
 import cats.syntax.functor._
 
@@ -10,7 +12,8 @@ trait Cache[F[_], K, V] {
   def remove(k: K): F[Unit]
 }
 
-private class TimeBasedCache[F[_], K, V](private val ref: Ref[F, Map[K, V]]) extends Cache[F, K, V] {
+class TimeBasedCache[F[_]: Functor, K, V] private (val ref: Ref[F, Map[K, V]])
+    extends Cache[F, K, V] {
   def getOption(k: K): F[Option[V]] = ???
   def unsafeGet(k: K): F[V]         = ???
   def put(k: K, v: V): F[Unit]      = ???

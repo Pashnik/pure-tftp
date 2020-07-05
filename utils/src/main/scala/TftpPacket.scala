@@ -18,8 +18,8 @@ object Mode { val modes = List(Netascii, Octet, Mail) }
 
 trait Opcoded { val opcode: Int }
 
-sealed abstract case class IOPacket[T <: Mode](path: File, format: T) extends TftpPacket
-case class RRQ(file: File, mode: Mode = Netascii)                     extends IOPacket(file, mode)
+sealed abstract class IOPacket[T <: Mode](path: File, format: T) extends TftpPacket
+case class RRQ(file: File, mode: Mode = Netascii)                extends IOPacket(file, mode)
 object RRQ extends Opcoded {
   val opcode                         = 1
   implicit val encoder: Encoder[RRQ] = (rrq: RRQ) => ???
@@ -43,5 +43,5 @@ case class Acknowledgment(block: Block) extends TftpPacket
 object Acknowledgment extends Opcoded {
   val opcode                                    = 4
   implicit val encoder: Encoder[Acknowledgment] = (ack: Acknowledgment) => ???
-  implicit val decoder: Decoder[Acknowledgment] = (bytes: Array[Byte]) => ???
+  implicit val decoder: Decoder[Acknowledgment] = (bytes: Chunk[Byte]) => ???
 }

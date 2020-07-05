@@ -8,7 +8,7 @@ class Main extends IOApp {
 
   def server: Stream[IO, Unit] =
     for {
-      config  <- Stream.eval(IO.fromEither(Config.load))
+      config  <- Stream.eval(Config.loadF[IO])
       blocker <- Stream.resource(Blocker[IO])
       serve   <- Server[IO].start(blocker, config)
     } yield serve

@@ -1,7 +1,7 @@
 import java.net.InetSocketAddress
 
 import scala.concurrent.duration._
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource}
+import cats.effect.{Blocker, ConcurrentEffect, ContextShift, IO, Resource}
 import fs2._
 import fs2.io.udp.{Packet, Socket, SocketGroup}
 
@@ -29,14 +29,12 @@ object Server {
             )
           )
 
-        def materialize[In] = Materializer[F, In, TftpPacket].materialize
-
         Stream
           .resource(socket)
           .flatMap { udpSocket =>
             udpSocket.reads(Some(params.timeout.duration.millis))
           }
-          .through(materialize)
+          .through(Materializer[F, Packet, TftpPacket].materialize)
 
         ???
       }

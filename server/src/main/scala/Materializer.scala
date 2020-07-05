@@ -1,6 +1,4 @@
-import Codec.{Decoded, Decoder}
-import cats.effect.{ConcurrentEffect, ContextShift}
-import cats.syntax.either._
+import Codec.Decoded
 import fs2.Pipe
 import fs2.io.udp.Packet
 
@@ -8,21 +6,22 @@ trait Materializer[F[_], A, B] {
   def materialize: Pipe[F, A, B]
 }
 
-object Materializer {
-  def apply[F[_]: ConcurrentEffect: ContextShift, A, B]: Materializer[F, A, B] = implicitly
+object Materializer extends TftpMaterializer {
+  def apply[F[_], In, Out](implicit m: Materializer[F, In, Out]) = m
+}
 
-  implicit def tftpMaterializer[F] =
+trait TftpMaterializer {
+  implicit def tftpMaterializer[F[_]] =
     new Materializer[F, Packet, TftpPacket] {
       type Opcode = Int
-      def materialize: Pipe[F, Packet, TftpPacket] = {
 
-        // TODO can we do better ?
+      def materialize: Pipe[F, Packet, TftpPacket] = {
         val decodeMatcher: Opcode => Decoded[TftpPacket] = {
-          case 1 => RRQ.decoder.decode
-          case 2 => WRQ.decoder.decode
-          case 3 => Data.decoder.decode
-          case 4 => Acknowledgment.decoder.decode
-          case _ => DecodedFailures.error.asLeft
+          case 1 => ???
+          case 2 => ???
+          case 3 => ???
+          case 4 => ???
+          case _ => ???
         }
 
         in =>

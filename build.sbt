@@ -20,21 +20,24 @@ lazy val catsVersion       = "2.0.0"
 lazy val fs2Version        = "2.1.0"
 lazy val pureConfigVersion = "0.12.2"
 lazy val circeVersion      = "0.12.3"
+lazy val refinedVersion    = "0.9.14"
 
 lazy val deps = {
   Seq(
       "io.circe" %% "circe-core"
     , "io.circe" %% "circe-generic"
     , "io.circe" %% "circe-parser"
-  ).map(_                     % circeVersion) ++ Seq(
-      "org.typelevel"         %% "cats-effect" % catsVersion
-    , "org.typelevel"         %% "cats-core" % catsVersion
-    , "org.scalatest"         %% "scalatest" % scalaTestVersion
-    , "ch.qos.logback"        % "logback-classic" % logbackVersion
-    , "com.github.pureconfig" %% "pureconfig" % pureConfigVersion
-    , "co.fs2"                %% "fs2-core" % fs2Version
-    , "co.fs2"                %% "fs2-io" % fs2Version
-  )
+  ).map(_ % circeVersion) ++
+    Seq("eu.timepit" %% "refined-pureconfig", "eu.timepit" %% "refined").map(_ % refinedVersion) ++
+    Seq(
+        "org.typelevel"         %% "cats-effect"    % catsVersion
+      , "org.typelevel"         %% "cats-core"      % catsVersion
+      , "org.scalatest"         %% "scalatest"      % scalaTestVersion
+      , "ch.qos.logback"        % "logback-classic" % logbackVersion
+      , "com.github.pureconfig" %% "pureconfig"     % pureConfigVersion
+      , "co.fs2"                %% "fs2-core"       % fs2Version
+      , "co.fs2"                %% "fs2-io"         % fs2Version
+    )
 }.map(_ withSources () withJavadoc ())
 
 lazy val assemblySettings = Seq(

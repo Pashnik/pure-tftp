@@ -23,7 +23,7 @@ object Server {
         def socket: Resource[F, Socket[F]] =
           SocketGroup[F](blocker).flatMap(
               _.open[F](
-                address = new InetSocketAddress(params.port.value)
+                address = new InetSocketAddress(params.port.serverPort.value)
               , receiveBufferSize = Some(params.rcvBuffer.value)
               , sendBufferSize = Some(params.sndBuffer.value)
             )

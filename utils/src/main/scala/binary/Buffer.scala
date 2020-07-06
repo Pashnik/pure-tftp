@@ -1,24 +1,27 @@
+package binary
+
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
-
-import TftpPacket.Opcode
 import fs2.Chunk
-
+import io.estatico.newtype.ops._
+import io.estatico.newtype.Coercible
 import scala.language.implicitConversions
 
 final case class Buffer private (private val underlying: Array[Byte]) { self =>
+
+  /**
+    * Not referential transperent. The state is updated with with every function call.
+    */
   trait BufferIterableOnce {
-    def takeString(enc: Charset = UTF_8): String
-    def takeOpcode: Opcode
-    def takeBlock: Block
-    def takeErrorCode: Int
+    def string(enc: Charset = UTF_8): String
+    def short[B](implicit ec: Coercible[Short, B]): B
   }
 
   final private class IterableOnceImpl extends BufferIterableOnce {
     private val bf = ByteBuffer.wrap(underlying)
 
-    def takeString(enc: Charset = UTF_8): String = {
+    def string(enc: Charset = UTF_8): String = {
       val pos = bf.position()
       val res = bf.array
         .slice(pos, bf.capacity + 1)
@@ -27,15 +30,13 @@ final case class Buffer private (private val underlying: Array[Byte]) { self =>
       new String(res, UTF_8)
     }
 
-    def takeOpcode: Opcode = ???
-    def takeBlock: Block   = Block(bf.getShort)
-    def takeErrorCode: Int = ???
+    def short[B](implicit ec: Coercible[Short, B]): B = bf.getShort.coerce
   }
 
   private def contramap(f: ByteBuffer => ByteBuffer) =
     Buffer(f(ByteBuffer.wrap(underlying)).array())
 
-  def put(number: Int): Buffer = self.contramap(_.putShort(number.toShort))
+  def put(short: Short): Buffer = self.contramap(_.putShort(short))
   def put(str: String, enc: Charset = UTF_8): Buffer =
     self.contramap(_.put(str.getBytes(enc)))
   def put(byteArray: Array[Byte])      = self.contramap(_.put(byteArray))

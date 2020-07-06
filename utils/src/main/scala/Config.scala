@@ -1,10 +1,8 @@
 import cats.MonadError
 import pureconfig._
-import eu.timepit.refined.pureconfig._ // do not remove
-import eu.timepit.refined.types.net.PortNumber
 import pureconfig.generic.auto._ // do not remove
 
-final case class Port(serverPort: PortNumber)
+final case class Port(serverPort: Int)
 final case class ReceiveBuffer(value: Int)
 final case class SendBuffer(value: Int)
 final case class Timeout(duration: Int)

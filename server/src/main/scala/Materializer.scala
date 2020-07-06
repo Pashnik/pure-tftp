@@ -1,4 +1,4 @@
-import Codec.Decoder
+import binary.Codec.Decoder
 import fs2.Pipe
 import fs2.io.udp.Packet
 

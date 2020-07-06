@@ -1,7 +1,7 @@
 import java.net.InetSocketAddress
 
 import scala.concurrent.duration._
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, IO, Resource}
+import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource}
 import fs2._
 import fs2.io.udp.{Packet, Socket, SocketGroup}
 

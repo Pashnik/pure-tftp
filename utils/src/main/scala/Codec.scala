@@ -3,7 +3,7 @@ import fs2.Chunk
 
 object Codec {
   trait Decoder[T] {
-    type Decoded = Either[T, DecodedFailure]
+    type Decoded = Either[DecodedFailure, T]
 
     def decode(bytes: Chunk[Byte]): Decoded
   }

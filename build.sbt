@@ -21,6 +21,7 @@ lazy val fs2Version        = "2.1.0"
 lazy val pureConfigVersion = "0.12.2"
 lazy val circeVersion      = "0.12.3"
 lazy val refinedVersion    = "0.9.14"
+lazy val coercibleVersion  = "0.4.4"
 
 lazy val deps = {
   Seq(
@@ -37,6 +38,7 @@ lazy val deps = {
       , "com.github.pureconfig" %% "pureconfig"     % pureConfigVersion
       , "co.fs2"                %% "fs2-core"       % fs2Version
       , "co.fs2"                %% "fs2-io"         % fs2Version
+      , "io.estatico"           %% "newtype"        % coercibleVersion
     )
 }.map(_ withSources () withJavadoc ())
 

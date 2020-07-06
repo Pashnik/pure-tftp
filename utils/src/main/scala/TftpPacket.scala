@@ -1,8 +1,12 @@
 import Codec._
+import TftpPacket.Opcode
 import eu.timepit.refined.W
 import eu.timepit.refined.auto._
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.numeric.Interval
+import Buffer.BufferOps._
+import Decoder.DecodedFailure
+import cats.syntax.either._
 import fs2.Chunk
 
 /**
@@ -10,8 +14,10 @@ import fs2.Chunk
   * @see [[https://tools.ietf.org/html/rfc1350]]
   */
 sealed trait TftpPacket extends Product with Serializable {
-  type Opcode = Int Refined Interval.Closed[W.`1`.T, W.`5`.T]
   val opcode: Opcode
+}
+object TftpPacket {
+  type Opcode = Int Refined Interval.Closed[W.`1`.T, W.`5`.T]
 }
 
 sealed trait Mode { val value: String }
@@ -27,7 +33,13 @@ case class RRQ(fileName: String, mode: Mode = Netascii) extends IOPacket(fileNam
 }
 object RRQ {
   implicit val rrqCodec: Codec[RRQ] = Codec.from[RRQ](
-      ???
+      Decoder.instance { chunk =>
+      val io                   = chunk.iterableOnce
+      val (opcode, name, mode) = (io.takeOpcode, io.takeString(), io.takeString())
+      // todo check opcode, mode, other errors
+      // todo newtype and coercible
+      RRQ(name, Netascii).asRight[DecodedFailure]
+    }
     , Encoder.instance[RRQ](
         r =>
         Buffer

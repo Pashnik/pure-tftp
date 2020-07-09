@@ -1,8 +1,10 @@
 import binary.Codec._
 import binary.Buffer.BufferOps._
-import Decoder.DecodedFailure
+import binary.Codec.Decoder.WrongMode
 import binary.{Buffer, Opcode}
-import cats.syntax.either._
+import cats.data.Validated
+import cats.syntax.apply._
+import cats.syntax.functor._
 import fs2.Chunk
 
 /**
@@ -31,11 +33,12 @@ object RRQ {
       val io                   = chunk.iterableOnce
       val (opcode, name, mode) = (io.short[Opcode], io.string(), io.string())
 
-      (for {
-        validOpcode <- Opcode.validate(opcode)
-        validMode   <- Option.when(mode == Netascii.value)(mode)
-      } yield validMode)
-        .fold()
+      (Validated
+         .cond(mode == Netascii.value, mode, WrongMode)
+         .toValidatedNel,
+       Opcode
+         .validate(opcode)
+         .toValidatedNel).tupled.as(RRQ(name))
     }
     , Encoder.instance[RRQ](
         r =>
@@ -54,8 +57,21 @@ case class WRQ(fileName: String, mode: Mode = Netascii) extends IOPacket(fileNam
   val opcode: Opcode = Opcode.unsafe(2)
 }
 object WRQ {
-  implicit val encoder: Encoder[WRQ] = (wrq: WRQ) => ???
-  implicit val decoder: Decoder[WRQ] = (chunk: Chunk[Byte]) => ???
+  implicit val wrqCodec: Codec[WRQ] = Codec.from[WRQ]( // todo remove copy-paste
+    Decoder.instance { chunk =>
+      val io                   = chunk.iterableOnce
+      val (opcode, name, mode) = (io.short[Opcode], io.string(), io.string())
+
+      (Validated
+         .cond(mode == Netascii.value, mode, WrongMode)
+         .toValidatedNel,
+       Opcode
+         .validate(opcode)
+         .toValidatedNel).tupled.as(RRQ(name))
+
+    }
+    , Encoder[RRQ].contramap[WRQ](wrq => RRQ(wrq.fileName))
+  )
 }
 
 case class Block(number: Short)

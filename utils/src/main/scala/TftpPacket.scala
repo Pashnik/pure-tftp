@@ -41,7 +41,7 @@ object RRQ {
         r =>
         Buffer
           .withCapacity(2 + r.fileName.length + 1 + r.mode.value.length + 1)
-          .put(r.opcode)
+          .put(r.opcode.code) // actually could be r.opcode
           .put(r.fileName)
           .tombstone()
           .put(r.mode.value)

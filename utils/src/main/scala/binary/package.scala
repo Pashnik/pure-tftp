@@ -1,4 +1,4 @@
-import binary.Codec.Decoder.{DecodedFailure, WrongOpcode}
+import binary.Codec.Decoder.{Failure, WrongOpcode}
 import cats.data.Validated
 import io.estatico.newtype.macros.newsubtype
 import io.estatico.newtype.ops._
@@ -10,7 +10,7 @@ package object binary {
     */
   @newsubtype class Opcode private (val code: Short)
   object Opcode {
-    def validate(value: Opcode): Validated[DecodedFailure, Opcode] =
+    def validate(value: Opcode): Validated[Failure, Opcode] =
       Validated.cond(value.code < 6, value, WrongOpcode)
     def unsafe(value: Short): Opcode = value.coerce
   }

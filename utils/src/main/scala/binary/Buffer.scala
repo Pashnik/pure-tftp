@@ -16,6 +16,7 @@ final case class Buffer private (private val underlying: Array[Byte]) { self =>
   trait BufferIterableOnce {
     def string(enc: Charset = UTF_8): String
     def short[B](implicit ec: Coercible[Short, B]): B
+    def raw(): Chunk[Byte]
   }
 
   final private class IterableOnceImpl extends BufferIterableOnce {
@@ -30,6 +31,13 @@ final case class Buffer private (private val underlying: Array[Byte]) { self =>
       new String(res, UTF_8)
     }
 
+    def raw(): Chunk[Byte] = {
+      val pos = bf.position()
+      Chunk.array(
+        bf.array()
+          .slice(pos, bf.capacity() + 1))
+    }
+
     def short[B](implicit ec: Coercible[Short, B]): B = bf.getShort.coerce
   }
 
@@ -40,7 +48,8 @@ final case class Buffer private (private val underlying: Array[Byte]) { self =>
   def put(str: String, enc: Charset = UTF_8): Buffer =
     self.contramap(_.put(str.getBytes(enc)))
   def put(byteArray: Array[Byte])      = self.contramap(_.put(byteArray))
-  def tombstone(): Buffer              = self.contramap(_.put(0.toByte))
+  def put(chunk: Chunk[Byte]): Buffer  = self.put(chunk.toArray) // todo why it needs result type?
+  def tombstone()                      = self.contramap(_.put(0.toByte))
   def toChunk: Chunk[Byte]             = Chunk.array(underlying)
   def iterableOnce: BufferIterableOnce = new IterableOnceImpl
 }

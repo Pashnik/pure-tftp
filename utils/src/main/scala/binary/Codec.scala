@@ -1,6 +1,7 @@
 package binary
 
-import binary.Codec.Decoder.{Decoded, DynamicFailure}
+import Tftp.{ErrorCode, Undefined}
+import binary.Codec.Decoder.Decoded
 import cats.data.Validated
 import fs2.Chunk
 import scala.util.Try
@@ -16,18 +17,12 @@ object Codec {
           .andThen { t =>
             Validated
               .fromTry(f(t))
-              .leftMap(e => DynamicFailure(e.getMessage))
+              .leftMap(e => Undefined(s"Error during decoding: ${e.getMessage}"))
         }
   }
 
   object Decoder {
-    type Decoded[V] = Validated[Failure, V]
-
-    sealed abstract class Failure(info: String) extends Product with Serializable
-    case object WrongOpcode                     extends Failure("opcode number is wrong")
-    case object WrongMode                       extends Failure("mode is not netascii")
-    case object DataOverspend                   extends Failure("there is more then 512 bytes in a chunk")
-    case class DynamicFailure(info: String)     extends Failure(info)
+    type Decoded[V] = Validated[ErrorCode, V]
 
     def apply[T: Decoder]: Decoder[T] = implicitly[Decoder[T]]
     def instance[T](fn: Chunk[Byte] => Decoded[T]): Decoder[T] =

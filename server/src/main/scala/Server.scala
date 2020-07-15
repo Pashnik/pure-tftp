@@ -1,7 +1,9 @@
 import java.net.InetSocketAddress
 
+import binary.Tftp.TftpPacket
+
 import scala.concurrent.duration._
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource}
+import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource}
 import fs2._
 import fs2.io.udp.{Packet, Socket, SocketGroup}
 
@@ -17,26 +19,24 @@ object Server {
     *
     * Send buffer size is actually size of the largest packet.
     */
-  def apply[F[_]: ConcurrentEffect: ContextShift]: Server[F] =
-    new Server[F] {
-      override def start(blocker: Blocker, params: Config): Stream[F, Unit] = {
-        def socket: Resource[F, Socket[F]] =
-          SocketGroup[F](blocker).flatMap(
-              _.open[F](
-                address = new InetSocketAddress(params.port.serverPort.value)
-              , receiveBufferSize = Some(params.rcvBuffer.value)
-              , sendBufferSize = Some(params.sndBuffer.value)
-            )
+  def apply[F[_]: Concurrent: ContextShift]: Server[F] =
+    (blocker: Blocker, params: Config) => {
+      def socket: Resource[F, Socket[F]] =
+        SocketGroup[F](blocker).flatMap(
+            _.open[F](
+              address = new InetSocketAddress(params.port.serverPort)
+            , receiveBufferSize = Some(params.rcvBuffer.value)
+            , sendBufferSize = Some(params.sndBuffer.value)
           )
+        )
 
-        Stream
-          .resource(socket)
-          .flatMap { udpSocket =>
-            udpSocket.reads(Some(params.timeout.duration.millis))
-          }
-          .through(Materializer[F, Packet, TftpPacket].materialize)
+      Stream
+        .resource(socket)
+        .flatMap { udpSocket =>
+          udpSocket.reads(Some(params.timeout.duration.millis))
+        }
+        .through(Materializer[F, Packet, TftpPacket].materialize)
 
-        ???
-      }
+      ???
     }
 }

@@ -1,4 +1,5 @@
 import binary.Codec.Decoder
+import binary.Tftp.TftpPacket
 import fs2.Pipe
 import fs2.io.udp.Packet
 
@@ -16,7 +17,7 @@ trait TftpMaterializer {
       type Opcode = Int
 
       def materialize: Pipe[F, Packet, TftpPacket] = {
-        val decodeMatcher: Opcode => Decoder[TftpPacket]#Decoded = {
+        val decodeMatcher: Opcode => Decoder[TftpPacket] = {
           case 1 => ???
           case 2 => ???
           case 3 => ???

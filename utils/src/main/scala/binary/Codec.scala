@@ -47,4 +47,19 @@ object Codec {
         def decode(bytes: Chunk[Byte]): Decoded[T] = decoder.decode(bytes)
       }
   }
+
+  object syntax {
+    implicit class EncoderOps[T](val t: T) {
+      def encoded(implicit E: Encoder[T]) = E.encode(t)
+    }
+
+    implicit class ChunkOps(private val underlying: Chunk[Byte]) {
+      def as[T: Decoder] = Decoder[T].decode(underlying)
+      def extractOpcode(): Opcode =
+        Buffer
+          .fromChunk(underlying)
+          .iterableOnce
+          .number[Opcode]()
+    }
+  }
 }

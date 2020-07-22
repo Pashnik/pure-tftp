@@ -1,6 +1,9 @@
-import binary.Codec.Decoder
-import binary.Tftp.TftpPacket
-import fs2.Pipe
+import binary.Tftp.{Data, RRQ, TftpPacket, Undefined, WRQ}
+import fs2.{Chunk, Pipe}
+import cats.syntax.traverse._
+import cats.syntax.validated._
+import binary.Codec.syntax._
+import cats.effect.Sync
 import fs2.io.udp.Packet
 
 trait Materializer[F[_], A, B] {
@@ -12,24 +15,27 @@ object Materializer extends TftpMaterializer {
 }
 
 trait TftpMaterializer {
-  implicit def tftpMaterializer[F[_]] =
-    new Materializer[F, Packet, TftpPacket] {
-      type Opcode = Int
-
-      def materialize: Pipe[F, Packet, TftpPacket] = {
-        val decodeMatcher: Opcode => Decoder[TftpPacket] = {
-          case 1 => ???
-          case 2 => ???
-          case 3 => ???
-          case 4 => ???
-          case _ => ???
+  implicit def tftpMaterializer[F[_]: Sync] =
+    new Materializer[F, Chunk[Packet], Chunk[TftpPacket]] {
+      def materialize: Pipe[F, Chunk[Packet], Chunk[TftpPacket]] = { in =>
+        in.evalMap { packets =>
+          packets
+            .map { p =>
+              (
+                p.bytes.extractOpcode().code match {
+                  case 1 => p.bytes.as[RRQ]
+                  case 2 => p.bytes.as[WRQ]
+                  case 3 => p.bytes.as[Data]
+                  case _ => Undefined("wrong opcode value").invalid
+                }
+              ).merge -> p.remote
+            }
+            .traverse {
+              case (packet, from) =>
+                // todo log
+                Sync[F].pure(packet)
+            }
         }
-
-        in =>
-          in.map { packet =>
-            // TODO take first 2 bytes as Short instance and pass to decode matcher
-            ???
-          }
       }
     }
 }

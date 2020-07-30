@@ -1,9 +1,12 @@
 import java.nio.charset.StandardCharsets
 
 import binary.Block
-import binary.Tftp.{Acknowledgment, Data, RRQ, WRQ}
+import binary.Tftp.{
+  Acknowledgment, Data, ErrorCode, FileAlreadyExists, FileNotFound, IllegalOperator, RRQ, Undefined,
+  WRQ
+}
 import org.scalacheck._
-import org.scalacheck.Prop._
+import org.scalacheck.Prop.{forAll, propBoolean}
 import cats.syntax.validated._
 import binary.Codec._
 import io.estatico.newtype.ops._
@@ -15,7 +18,7 @@ object TftpCodecSpec extends Properties("TftpCodec") with Matchers {
     (Encoder[T].encode _ andThen Decoder[T].decode)(value) == value.valid
 
   val strGen   = Gen.alphaNumStr
-  val shortGen = Arbitrary.arbitrary[Short]
+  val shortGen = Gen.choose(0, 25000).map(_.toShort)
 
   implicit val rrqArbitrary = Arbitrary(strGen.map(RRQ(_)))
   implicit val wrqArbitrary = Arbitrary(strGen.map(WRQ(_)))
@@ -31,6 +34,18 @@ object TftpCodecSpec extends Properties("TftpCodec") with Matchers {
         )
     }
   implicit val packetArbitrary = Arbitrary(shortGen.map(s => Acknowledgment(s.coerce[Block])))
+  implicit val errArbitrary =
+    Arbitrary {
+      for {
+        toErrCode <- Gen.oneOf(
+                        Undefined(_)
+                      , FileNotFound(_)
+                      , IllegalOperator(_)
+                      , FileAlreadyExists(_)
+                    )
+        str <- strGen
+      } yield toErrCode(str)
+    }
 
   property("RRQ-packet") = forAll { rrq: RRQ =>
     roundTripLaw(rrq)
@@ -41,10 +56,14 @@ object TftpCodecSpec extends Properties("TftpCodec") with Matchers {
   }
 
   property("Data-packet") = forAll { data: Data =>
-    roundTripLaw(data)
+    (data.raw.size <= 512) ==> roundTripLaw(data)
   }
 
   property("Ack-packet") = forAll { packet: Acknowledgment =>
     roundTripLaw(packet)
+  }
+
+  property("Err-packet") = forAll { err: ErrorCode =>
+    roundTripLaw(err)
   }
 }

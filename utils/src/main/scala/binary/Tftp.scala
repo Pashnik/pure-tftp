@@ -85,7 +85,7 @@ object Tftp {
         val (_, block, bytes) = (io.number[Opcode](), io.number[Block](), io.raw())
 
         Validated
-          .cond[ErrorCode, Chunk[Byte]](bytes.size > maxChunkLength,
+          .cond[ErrorCode, Chunk[Byte]](bytes.size < maxChunkLength,
                                         bytes,
                                         Undefined("Chunk size is more then 512 bytes"))
           .map(Data(block, _))

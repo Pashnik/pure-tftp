@@ -50,7 +50,7 @@ final case class Buffer private (private val underlying: Array[Byte], private va
   def put(short: Short): Buffer                      = self.contramap(_.putShort(short))
   def put(str: String, enc: Charset = UTF_8): Buffer = self.contramap(_.put(str.getBytes(enc)))
   def put(byteArray: Array[Byte])                    = self.contramap(_.put(byteArray))
-  def put(chunk: Chunk[Byte]): Buffer                = self.put(chunk.toArray) // todo why it needs result type?
+  def put(chunk: Chunk[Byte]): Buffer                = self.put(chunk.toArray)
   def withTombstone                                  = self.contramap(_.put(0.toByte))
   def toChunk: Chunk[Byte]                           = Chunk.array(underlying)
   def iterableOnce: BufferIterableOnce               = new IterableOnceImpl

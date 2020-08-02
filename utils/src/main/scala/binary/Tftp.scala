@@ -14,6 +14,7 @@ import scala.util.Try
 object Tftp {
   sealed trait TftpPacket extends Product with Serializable {
     val opcode: Opcode
+    def show: String
   }
 
   private[Tftp] object TftpPacket {
@@ -34,6 +35,7 @@ object Tftp {
 
   case class RRQ(fileName: String, mode: Mode = Netascii) extends IOPacket(fileName, mode) {
     val opcode: Opcode = Opcode.unsafe(1)
+    def show: String   = s"type=RRQ; file-name=$fileName; mode=$mode"
   }
 
   object RRQ {
@@ -66,6 +68,7 @@ object Tftp {
 
   case class WRQ(fileName: String, mode: Mode = Netascii) extends IOPacket(fileName, mode) {
     val opcode: Opcode = Opcode.unsafe(2)
+    def show: String   = s"type=WRQ; file-name=$fileName; mode=$mode"
   }
 
   object WRQ {
@@ -76,6 +79,7 @@ object Tftp {
 
   case class Data(block: Block, raw: Chunk[Byte]) extends TftpPacket {
     val opcode: Opcode = Opcode.unsafe(3)
+    def show: String   = s"type=Data; block=${block.number}"
   }
 
   object Data {
@@ -103,6 +107,7 @@ object Tftp {
 
   case class Acknowledgment(block: Block) extends TftpPacket {
     val opcode: Opcode = Opcode.unsafe(4)
+    def show: String   = s"type=ACK; block=${block.number}"
   }
 
   object Acknowledgment {
@@ -126,9 +131,10 @@ object Tftp {
   sealed abstract class ErrorCode(val description: String, val message: String, val code: Code)
       extends TftpPacket {
     val opcode: Opcode = Opcode.unsafe(5)
+    def show: String   = s"type=Error; description=$description"
   }
   final case class Undefined(override val message: String)
-      extends ErrorCode("Not defined, see error message", message, Code(1))
+      extends ErrorCode("Not defined, see error message", message, Code(1)) {}
   final case class FileNotFound(override val message: String)
       extends ErrorCode("File not found", message, Code(2))
   final case class IllegalOperator(override val message: String)

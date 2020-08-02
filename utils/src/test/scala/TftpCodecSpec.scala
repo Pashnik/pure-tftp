@@ -1,10 +1,7 @@
 import java.nio.charset.StandardCharsets
 
 import binary.Block
-import binary.Tftp.{
-  Acknowledgment, Data, ErrorCode, FileAlreadyExists, FileNotFound, IllegalOperator, RRQ, Undefined,
-  WRQ
-}
+import binary.Tftp._
 import org.scalacheck._
 import org.scalacheck.Prop.{forAll, propBoolean}
 import cats.syntax.validated._

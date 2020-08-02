@@ -1,11 +1,10 @@
 import java.net.InetSocketAddress
 
-import binary.Tftp.TftpPacket
-
 import scala.concurrent.duration._
-import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource}
+import cats.effect.{Blocker, Concurrent, ContextShift, Resource}
 import fs2._
-import fs2.io.udp.{Packet, Socket, SocketGroup}
+import fs2.io.udp.{Socket, SocketGroup}
+import org.slf4j.Logger
 
 trait Server[F[_]] {
   def start(blocker: Blocker, params: Config): Stream[F, Unit]
@@ -19,7 +18,7 @@ object Server {
     *
     * Send buffer size is actually size of the largest packet.
     */
-  def apply[F[_]: Concurrent: ContextShift]: Server[F] =
+  def apply[F[_]: Concurrent: ContextShift](implicit L: Logger): Server[F] =
     (blocker: Blocker, params: Config) => {
       def socket: Resource[F, Socket[F]] =
         SocketGroup[F](blocker).flatMap(
@@ -32,10 +31,9 @@ object Server {
 
       Stream
         .resource(socket)
-        .flatMap { udpSocket =>
-          udpSocket.reads(Some(params.timeout.duration.millis))
-        }
-        .through(Materializer[F, Packet, TftpPacket].materialize)
+        .flatMap(_.reads(Some(params.timeout.duration.millis)))
+        .chunks
+        .through(new Materializer[F].apply)
 
       ???
     }

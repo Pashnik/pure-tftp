@@ -24,4 +24,11 @@ package object binary {
     * Error code in Error packet
     */
   @newsubtype case class Code(code: Short)
+
+  @newsubtype case class TimeStampMillis(value: Long) {
+    def >(duration: Long): Boolean                 = value > duration
+    def <(other: TimeStampMillis): Boolean         = value < other.value
+    def -(other: TimeStampMillis): TimeStampMillis = (value - other.value).coerce[TimeStampMillis]
+    def +(other: TimeStampMillis): TimeStampMillis = (value + other.value).coerce[TimeStampMillis]
+  }
 }

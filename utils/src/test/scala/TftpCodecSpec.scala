@@ -30,7 +30,7 @@ object TftpCodecSpec extends Properties("TftpCodec") with Matchers {
           , Chunk.array(data.getBytes(StandardCharsets.UTF_8))
         )
     }
-  implicit val packetArbitrary = Arbitrary(shortGen.map(s => Acknowledgment(s.coerce[Block])))
+  implicit val packetArbitrary = Arbitrary(shortGen.map(s => ACK(s.coerce[Block])))
   implicit val errArbitrary =
     Arbitrary {
       for {
@@ -56,7 +56,7 @@ object TftpCodecSpec extends Properties("TftpCodec") with Matchers {
     (data.raw.size <= 512) ==> roundTripLaw(data)
   }
 
-  property("Ack-packet") = forAll { packet: Acknowledgment =>
+  property("Ack-packet") = forAll { packet: ACK =>
     roundTripLaw(packet)
   }
 

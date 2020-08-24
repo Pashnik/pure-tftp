@@ -31,9 +31,7 @@ object Tftp {
   object Octet    extends Mode { val value: String = "octet"    }
   object Mail     extends Mode { val value: String = "mode"     }
 
-  sealed abstract class IOPacket[M <: Mode](fileName: String, format: M) extends TftpPacket
-
-  case class RRQ(fileName: String, mode: Mode = Netascii) extends IOPacket(fileName, mode) {
+  case class RRQ(fileName: String, mode: Mode = Netascii) extends TftpPacket {
     val opcode: Opcode = Opcode.unsafe(1)
     def show: String   = s"type=RRQ; file-name=$fileName; mode=$mode"
   }
@@ -66,7 +64,7 @@ object Tftp {
     )
   }
 
-  case class WRQ(fileName: String, mode: Mode = Netascii) extends IOPacket(fileName, mode) {
+  case class WRQ(fileName: String, mode: Mode = Netascii) extends TftpPacket {
     val opcode: Opcode = Opcode.unsafe(2)
     def show: String   = s"type=WRQ; file-name=$fileName; mode=$mode"
   }
@@ -105,20 +103,20 @@ object Tftp {
     )
   }
 
-  case class Acknowledgment(block: Block) extends TftpPacket {
+  case class ACK(block: Block) extends TftpPacket {
     val opcode: Opcode = Opcode.unsafe(4)
     def show: String   = s"type=ACK; block=${block.number}"
   }
 
-  object Acknowledgment {
-    implicit val ackCodec: Codec[Acknowledgment] = Codec.from(
-        Decoder.instance[Acknowledgment] { chunk =>
+  object ACK {
+    implicit val ackCodec: Codec[ACK] = Codec.from(
+        Decoder.instance[ACK] { chunk =>
         val io         = chunk.iterableOnce
         val (_, block) = (io.number[Opcode](), io.number[Block]())
 
-        Validated.valid[ErrorCode, Acknowledgment](Acknowledgment(block))
+        Validated.valid[ErrorCode, ACK](ACK(block))
       }
-      , Encoder.instance { (ack: Acknowledgment) =>
+      , Encoder.instance { (ack: ACK) =>
         Buffer
           .withCapacity(numberLength + numberLength)
           .put(ack.opcode.code)

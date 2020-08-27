@@ -1,7 +1,6 @@
-import java.net.InetSocketAddress
+import java.net.{InetAddress, InetSocketAddress}
 
-import binary.Tftp.{ACK, ErrorCode, IllegalOperator, RRQ, TftpPacket, WRQ}
-
+import binary.Tftp.{ACK, Data, IllegalOperator, RRQ, TftpPacket, WRQ}
 import scala.concurrent.duration._
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource}
 import fs2._
@@ -9,7 +8,9 @@ import fs2.io.udp.{Packet, Socket, SocketGroup}
 import org.slf4j.Logger
 import cats.syntax.option._
 import binary.Codec.syntax._
+import cats.syntax.functor._
 import cats.syntax.validated._
+import scala.collection.mutable
 
 trait Server[F[_]] {
   def start(blocker: Blocker, params: Config): Stream[F, Unit]
@@ -35,20 +36,46 @@ object Server {
         )
 
       val decodingPipe: Pipe[F, Packet, (InetSocketAddress, TftpPacket)] =
-        _.chunks
-          .flatMap { chunk =>
-            Stream.chunk(chunk.map { p =>
-              p.remote -> (p.bytes.extractOpcode() match {
-                case 1 => p.bytes.as[RRQ]
-                case 2 => p.bytes.as[WRQ]
-                case 3 => p.bytes.as[ACK]
-                case _ =>
-                  IllegalOperator("ho-ho").invalid[TftpPacket]
-              }).merge
-            })
+        _.mapChunks {
+          _.map { p =>
+            p.remote -> (p.bytes.extractOpcode() match {
+              case 1 => p.bytes.as[RRQ]
+              case 2 => p.bytes.as[WRQ]
+              case 3 => p.bytes.as[Data]
+              case 4 => p.bytes.as[ACK]
+              case _ =>
+                IllegalOperator("can't recognize tftp-operation").invalid[TftpPacket]
+            }).merge
           }
+        }
 
-      val pipeline: Pipe[F, Packet, Packet] = ???
+      val pipeline: Pipe[F, Packet, Packet] =
+        _.through(decodingPipe).chunks
+          .flatMap { ch =>
+            val ips = mutable.Map.empty[InetAddress, TftpPacket]
+            val res = ch.map {
+              case (from, packet) =>
+                ips
+                  .get(from.getAddress) match {
+                  case _: Some[TftpPacket] => ()
+                  case None =>
+                    ips += (from.getAddress -> packet)
+                    ()
+                }
+                packet
+            }
+
+            Stream
+              .eval(
+                  Concurrent[F]
+                  .delay(
+                      ips.foreach {
+                      case (from, packet) =>
+                        L.info(s"received packet=${packet.show} from $from")
+                    }
+                  )
+              ) >> Stream.chunk(res)
+          }
 
       Stream
         .resource(socketResource)
